@@ -1,0 +1,54 @@
+<h2>My Tasks</h2>
+
+<div class="card">
+  <h3>{{ isEditMode ? 'Update Task' : 'Add Task' }}</h3>
+
+  <form (ngSubmit)="submitTask()" class="task-form">
+
+    <input type="text"
+      placeholder="Title"
+      [(ngModel)]="newTask.title"
+      name="title"
+      required>
+
+    <input type="text"
+      placeholder="Description"
+      [(ngModel)]="newTask.description"
+      name="description"
+      required>
+
+    <select [(ngModel)]="newTask.status" name="status">
+      <option value="PENDING">Pending</option>
+      <option value="COMPLETED">Completed</option>
+    </select>
+
+    <button type="submit">
+      {{ isEditMode ? 'Update Task' : '+ Add Task' }}
+    </button>
+
+    <button type="button" *ngIf="isEditMode" (click)="resetForm()">
+      Cancel
+    </button>
+
+  </form>
+</div>
+
+<table *ngIf="tasks.length > 0">
+  <tr>
+    <th>Title</th>
+    <th>Description</th>
+    <th>Status</th>
+    <th>Actions</th>
+  </tr>
+
+  <tr *ngFor="let task of tasks">
+    <td>{{ task.title }}</td>
+    <td>{{ task.description }}</td>
+    <td>{{ task.status }}</td>
+
+    <td>
+      <button (click)="editTask(task)">Edit</button>
+      <button (click)="deleteTask(task.id!)">Delete</button>
+    </td>
+  </tr>
+</table>
