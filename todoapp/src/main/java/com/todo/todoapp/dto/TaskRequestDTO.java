@@ -7,5 +7,6 @@ public class TaskRequestDTO {
     private String title;
     private String description;
     private String status;
+    private String priority;   // ✅ NEW
     private Long userId;
 }

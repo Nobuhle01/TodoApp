@@ -13,7 +13,7 @@ import com.todo.todoapp.service.TaskService;
 @RestController
 @RequestMapping("/api/tasks")
 @RequiredArgsConstructor
-@CrossOrigin("*")
+
 public class TaskController {
 
     private final TaskService taskService;
@@ -28,9 +28,9 @@ public class TaskController {
         return taskService.getAllTasks();
     }
 
-    @GetMapping("/{id}")
-    public TaskResponseDTO getTaskById(@PathVariable Long id) {
-        return taskService.getTaskById(id);
+   @GetMapping("/user/{userId}")
+    public List<TaskResponseDTO> getTasksByUser(@PathVariable Long userId) {
+        return taskService.getTasksByUser(userId);
     }
 
     @PutMapping("/{id}")

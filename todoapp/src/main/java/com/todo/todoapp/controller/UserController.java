@@ -11,7 +11,7 @@ import com.todo.todoapp.service.UserService;
 @RestController
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
-@CrossOrigin("*")
+
 public class UserController {
 
     private final UserService userService;

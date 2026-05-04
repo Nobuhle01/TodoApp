@@ -22,7 +22,6 @@ public class TaskService {
 
     // CREATE TASK
     public TaskResponseDTO createTask(TaskRequestDTO dto) {
-
         User user = userRepository.findById(dto.getUserId())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
@@ -30,9 +29,18 @@ public class TaskService {
         task.setTitle(dto.getTitle());
         task.setDescription(dto.getDescription());
         task.setStatus(dto.getStatus());
+        task.setPriority(dto.getPriority());   // ✅ NEW
         task.setUser(user);
 
         return mapToDTO(taskRepository.save(task));
+    }
+
+    // GET TASKS BY USER
+    public List<TaskResponseDTO> getTasksByUser(Long userId) {
+        return taskRepository.findByUserId(userId)
+                .stream()
+                .map(this::mapToDTO)
+                .collect(Collectors.toList());
     }
 
     // GET ALL TASKS
@@ -43,24 +51,22 @@ public class TaskService {
                 .collect(Collectors.toList());
     }
 
-    // GET TASK BY ID
+    // GET BY ID
     public TaskResponseDTO getTaskById(Long id) {
-
         Task task = taskRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Task not found"));
-
         return mapToDTO(task);
     }
 
     // UPDATE TASK
     public TaskResponseDTO updateTask(Long id, TaskRequestDTO dto) {
-
         Task task = taskRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Task not found"));
 
         task.setTitle(dto.getTitle());
         task.setDescription(dto.getDescription());
         task.setStatus(dto.getStatus());
+        task.setPriority(dto.getPriority());   // ✅ NEW
 
         if (dto.getUserId() != null) {
             User user = userRepository.findById(dto.getUserId())
@@ -73,29 +79,24 @@ public class TaskService {
 
     // DELETE TASK
     public void deleteTask(Long id) {
-
         Task task = taskRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Task not found"));
-
         taskRepository.delete(task);
     }
 
-    // MAPPER (SAFE FIX 🔥)
+    // MAPPER
     private TaskResponseDTO mapToDTO(Task task) {
-
         TaskResponseDTO dto = new TaskResponseDTO();
         dto.setId(task.getId());
         dto.setTitle(task.getTitle());
         dto.setDescription(task.getDescription());
         dto.setStatus(task.getStatus());
-
-        // SAFE CHECK (PREVENT 500 ERROR)
+        dto.setPriority(task.getPriority());   // ✅ NEW
         if (task.getUser() != null) {
             dto.setUserId(task.getUser().getId());
         } else {
             dto.setUserId(null);
         }
-
         return dto;
     }
 }
