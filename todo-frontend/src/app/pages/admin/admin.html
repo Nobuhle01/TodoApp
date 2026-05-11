@@ -1,0 +1,141 @@
+<div class="admin-wrapper" [class.dark]="isDarkMode">
+
+  <!-- HEADER -->
+  <div class="admin-header">
+    <div class="header-left">
+      <div class="admin-logo">🛡️</div>
+      <div>
+        <h1 class="admin-title">Admin Panel</h1>
+        <p class="admin-sub">Todo Application Management</p>
+      </div>
+    </div>
+    <div class="header-right">
+      <button class="icon-btn" (click)="toggleDarkMode()">
+        <i class="fas" [ngClass]="isDarkMode ? 'fa-sun' : 'fa-moon'"></i>
+      </button>
+      <button class="btn-logout" (click)="logout()">
+        <i class="fas fa-sign-out-alt"></i> Logout
+      </button>
+    </div>
+  </div>
+
+  <!-- STATS ROW -->
+  <div class="stats-row">
+    <div class="stat-card-admin">
+      <div class="stat-icon icon-purple"><i class="fas fa-users"></i></div>
+      <div>
+        <div class="stat-num">{{ users.length }}</div>
+        <div class="stat-lbl">Total Users</div>
+      </div>
+    </div>
+    <div class="stat-card-admin">
+      <div class="stat-icon icon-blue"><i class="fas fa-tasks"></i></div>
+      <div>
+        <div class="stat-num">{{ totalTasks }}</div>
+        <div class="stat-lbl">Total Tasks</div>
+      </div>
+    </div>
+    <div class="stat-card-admin">
+      <div class="stat-icon icon-green"><i class="fas fa-check-circle"></i></div>
+      <div>
+        <div class="stat-num">{{ totalCompleted }}</div>
+        <div class="stat-lbl">Completed</div>
+      </div>
+    </div>
+    <div class="stat-card-admin">
+      <div class="stat-icon icon-yellow"><i class="fas fa-clock"></i></div>
+      <div>
+        <div class="stat-num">{{ totalPending }}</div>
+        <div class="stat-lbl">Pending</div>
+      </div>
+    </div>
+    <div class="stat-card-admin">
+      <div class="stat-icon icon-pink"><i class="fas fa-chart-pie"></i></div>
+      <div>
+        <div class="stat-num">{{ overallRate }}%</div>
+        <div class="stat-lbl">Completion Rate</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- USER TABLE -->
+  <div class="table-card">
+    <div class="table-header">
+      <h2>User Management</h2>
+      <div class="search-bar">
+        <i class="fas fa-search"></i>
+        <input type="text" placeholder="Search users..."
+               [(ngModel)]="searchQuery" name="search">
+      </div>
+    </div>
+
+    <!-- LOADING -->
+    <div *ngIf="isLoading" class="spinner-wrapper">
+      <div class="spinner"></div>
+      <p>Loading users...</p>
+    </div>
+
+    <!-- TABLE -->
+    <table *ngIf="!isLoading" class="user-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Role</th>
+          <th>Total Tasks</th>
+          <th>Completed</th>
+          <th>Pending</th>
+          <th>Progress</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let user of filteredUsers; let i = index">
+          <td>{{ i + 1 }}</td>
+          <td>
+            <div class="user-cell">
+              <div class="mini-avatar">{{ user.name.charAt(0).toUpperCase() }}</div>
+              {{ user.name }}
+            </div>
+          </td>
+          <td>{{ user.email }}</td>
+          <td>
+            <span class="role-badge"
+                  [ngClass]="user.role === 'ADMIN' ? 'badge-admin' : 'badge-user'">
+              {{ user.role }}
+            </span>
+          </td>
+          <td class="text-center">{{ user.totalTasks }}</td>
+          <td class="text-center text-green">{{ user.completedTasks }}</td>
+          <td class="text-center text-yellow">{{ user.pendingTasks }}</td>
+          <td>
+            <div class="mini-progress">
+              <div class="mini-fill"
+                   [style.width.%]="user.totalTasks > 0
+                     ? (user.completedTasks / user.totalTasks * 100) : 0">
+              </div>
+            </div>
+            <span class="mini-pct">
+              {{ user.totalTasks > 0
+                  ? (user.completedTasks / user.totalTasks * 100 | number:'1.0-0')
+                  : 0 }}%
+            </span>
+          </td>
+          <td>
+            <button class="btn-delete-user"
+                    [disabled]="user.role === 'ADMIN'"
+                    (click)="deleteUser(user)">
+              <i class="fas fa-trash"></i>
+            </button>
+          </td>
+        </tr>
+
+        <tr *ngIf="filteredUsers.length === 0">
+          <td colspan="9" class="empty-row">No users found</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>

@@ -1,4 +1,25 @@
-<div class="app-wrapper">
+<div class="app-wrapper" [class.dark]="isDarkMode">
+
+  <!-- TOAST NOTIFICATIONS -->
+  <div class="toast-container">
+    <div *ngFor="let toast of toasts"
+         class="toast toast-{{ toast.type }}"
+         [class.toast-confirm]="toast.type === 'error' && tasks.length > 0">
+
+      <span>{{ toast.message }}</span>
+
+      <div class="toast-actions">
+        <!-- confirm delete toasts have Yes/No buttons -->
+        <ng-container *ngIf="toast.message.startsWith('Delete')">
+          <button class="toast-yes" (click)="confirmDelete(toast.id)">Yes, delete</button>
+          <button class="toast-no" (click)="dismissToast(toast.id)">Cancel</button>
+        </ng-container>
+        <!-- regular toasts just have X -->
+        <button *ngIf="!toast.message.startsWith('Delete')"
+                class="toast-close" (click)="dismissToast(toast.id)">✕</button>
+      </div>
+    </div>
+  </div>
 
   <!-- HEADER -->
   <div class="top-header">
@@ -8,6 +29,10 @@
              [(ngModel)]="searchQuery" name="search">
     </div>
     <div class="header-right">
+      <!-- Dark mode toggle -->
+      <button class="icon-btn" (click)="toggleDarkMode()" title="Toggle dark mode">
+        <i class="fas" [ngClass]="isDarkMode ? 'fa-sun' : 'fa-moon'"></i>
+      </button>
       <button class="icon-btn">
         <i class="fas fa-bell"></i>
         <span class="notif-dot"></span>
@@ -21,7 +46,7 @@
 
   <div class="main-grid">
 
-    <!-- LEFT: TASK CONTENT -->
+    <!-- LEFT: CONTENT -->
     <div class="content-area">
 
       <!-- TITLE -->
@@ -31,14 +56,45 @@
           <span class="username-highlight">{{ userName }}</span> —
           you've got <span class="count-highlight">{{ pendingTasks.length }}</span>
           tasks today
-          <button class="add-btn" (click)="openModal()">
+          <button type="button" class="add-btn" (click)="openModal()">
             <i class="fas fa-plus"></i> Add New
           </button>
         </h1>
       </div>
 
-      <!-- ON HOLD / PENDING TASKS -->
-      <div class="section">
+      <!-- FILTER BAR -->
+      <div class="filter-bar">
+        <div class="filter-group">
+          <label>Status</label>
+          <select [(ngModel)]="statusFilter" name="statusFilter">
+            <option value="ALL">All Statuses</option>
+            <option value="PENDING">Pending</option>
+            <option value="IN_PROGRESS">In Progress</option>
+            <option value="COMPLETED">Completed</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>Priority</label>
+          <select [(ngModel)]="priorityFilter" name="priorityFilter">
+            <option value="ALL">All Priorities</option>
+            <option value="CRITICAL">Critical</option>
+            <option value="NORMAL">Normal</option>
+            <option value="MINOR">Minor</option>
+          </select>
+        </div>
+        <button class="btn-reset" (click)="statusFilter='ALL'; priorityFilter='ALL'; searchQuery=''">
+          <i class="fas fa-rotate-left"></i> Reset
+        </button>
+      </div>
+
+      <!-- LOADING SPINNER -->
+      <div *ngIf="isLoading" class="spinner-wrapper">
+        <div class="spinner"></div>
+        <p>Loading your tasks...</p>
+      </div>
+
+      <!-- PENDING TASKS -->
+      <div class="section" *ngIf="!isLoading">
         <div class="section-header">
           <h2>On Hold</h2>
           <span class="count-badge">{{ pendingTasks.length }}</span>
@@ -48,24 +104,30 @@
           🎉 No pending tasks!
         </div>
 
-        <div class="task-item" *ngFor="let task of pendingTasks">
+        <div class="task-item" *ngFor="let task of pendingTasks"
+             [class.overdue]="isOverdue(task)">
           <div class="task-check" (click)="toggleComplete(task)"></div>
           <div class="task-body">
             <div class="task-title">{{ task.title }}</div>
             <div class="task-desc" *ngIf="task.description">{{ task.description }}</div>
+            <!-- Due date display -->
+            <div class="task-due" *ngIf="task.dueDate">
+              <i class="fas fa-calendar-alt"></i>
+              {{ task.dueDate | date:'mediumDate' }}
+              <span *ngIf="isOverdue(task)" class="overdue-tag">Overdue</span>
+            </div>
           </div>
           <span class="status-badge status-{{ task.status | lowercase }}">
             {{ task.status === 'PENDING' ? 'Pending' : 'In Progress' }}
           </span>
           <span class="priority-badge priority-{{ (task.priority || 'normal') | lowercase }}">
-            <i class="fas fa-circle"></i>
-            {{ task.priority || 'Normal' }}
+            <i class="fas fa-circle"></i> {{ task.priority || 'Normal' }}
           </span>
           <div class="task-actions">
-            <button class="action-btn edit-btn" (click)="editTask(task)">
+            <button type="button" class="action-btn edit-btn" (click)="editTask(task)">
               <i class="fas fa-pen"></i>
             </button>
-            <button class="action-btn delete-btn" (click)="deleteTask(task.id)">
+            <button type="button" class="action-btn delete-btn" (click)="deleteTask(task.id)">
               <i class="fas fa-trash"></i>
             </button>
           </div>
@@ -73,7 +135,7 @@
       </div>
 
       <!-- COMPLETED TASKS -->
-      <div class="section">
+      <div class="section" *ngIf="!isLoading">
         <div class="section-header">
           <h2>Completed</h2>
           <span class="count-badge badge-done">{{ completedTasks.length }}</span>
@@ -87,17 +149,20 @@
           <div class="task-check checked" (click)="toggleComplete(task)">✓</div>
           <div class="task-body">
             <div class="task-title done-text">{{ task.title }}</div>
+            <div class="task-due" *ngIf="task.dueDate">
+              <i class="fas fa-calendar-alt"></i>
+              {{ task.dueDate | date:'mediumDate' }}
+            </div>
           </div>
           <span class="status-badge status-completed">Completed</span>
           <span class="priority-badge priority-{{ (task.priority || 'normal') | lowercase }}">
-            <i class="fas fa-circle"></i>
-            {{ task.priority || 'Normal' }}
+            <i class="fas fa-circle"></i> {{ task.priority || 'Normal' }}
           </span>
           <div class="task-actions">
-            <button class="action-btn edit-btn" (click)="editTask(task)">
+            <button type="button" class="action-btn edit-btn" (click)="editTask(task)">
               <i class="fas fa-pen"></i>
             </button>
-            <button class="action-btn delete-btn" (click)="deleteTask(task.id)">
+            <button type="button" class="action-btn delete-btn" (click)="deleteTask(task.id)">
               <i class="fas fa-trash"></i>
             </button>
           </div>
@@ -106,48 +171,57 @@
 
     </div>
 
-    <!-- RIGHT: SIDEBAR -->
-    <div class="sidebar">
-      <h3 class="sidebar-title">Results Summary</h3>
+    <!-- RIGHT: SIDEBAR — replace your current sidebar with this -->
+<div class="sidebar">
+  <h3 class="sidebar-title">Results Summary</h3>
 
-      <div class="stat-card">
-        <div class="stat-label">Completion Rate</div>
-        <div class="stat-value">{{ completionRate }}%</div>
-        <div class="progress-bar">
-          <div class="progress-fill" [style.width.%]="completionRate"></div>
-        </div>
-      </div>
-
-      <div class="stat-card">
-        <div class="stat-label">Total Tasks</div>
-        <div class="stat-value">{{ tasks.length }}</div>
-      </div>
-
-      <div class="stat-card highlight-green">
-        <div class="stat-label">Completed</div>
-        <div class="stat-value">{{ completedTasks.length }}</div>
-      </div>
-
-      <div class="stat-card highlight-yellow">
-        <div class="stat-label">Pending</div>
-        <div class="stat-value">{{ pendingTasks.length }}</div>
-      </div>
+  <div class="stat-card">
+    <div class="stat-label">Completion Rate</div>
+    <div class="stat-value">{{ completionRate }}%</div>
+    <div class="progress-bar">
+      <div class="progress-fill" [style.width.%]="completionRate"></div>
     </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-label">Total Tasks</div>
+    <div class="stat-value">{{ tasks.length }}</div>
+  </div>
+
+  <div class="stat-card highlight-green">
+    <div class="stat-label">Completed</div>
+    <!-- ✅ use completedTasks getter — no inline filter -->
+    <div class="stat-value">{{ completedTasks.length }}</div>
+  </div>
+
+  <div class="stat-card highlight-yellow">
+    <div class="stat-label">Pending</div>
+    <div class="stat-value">{{ pendingTasks.length }}</div>
+  </div>
+
+  <!-- ✅ use overdueCount getter — no inline filter -->
+  <div class="stat-card highlight-red" *ngIf="overdueCount > 0">
+    <div class="stat-label">⚠️ Overdue</div>
+    <div class="stat-value">{{ overdueCount }}</div>
+  </div>
+</div>
 
   </div>
 </div>
 
 <!-- MODAL -->
 <div class="modal-overlay" *ngIf="showModal" (click)="closeModal()">
-  <div class="modal-box" (click)="$event.stopPropagation()">
+  <div class="modal-box" [class.dark]="isDarkMode" (click)="$event.stopPropagation()">
     <h2 class="modal-title">{{ isEditMode ? 'Update Task' : 'Add New Task' }}</h2>
 
     <form (ngSubmit)="submitTask()">
 
       <div class="form-group">
-        <label>Task Title</label>
-        <input type="text" [(ngModel)]="newTask.title"
-               name="title" placeholder="Enter task title" required>
+        <label>Task Title <span class="required">*</span></label>
+        <input type="text" [(ngModel)]="newTask.title" name="title"
+               placeholder="Enter task title"
+               [class.input-error]="formErrors.title">
+        <span class="error-msg" *ngIf="formErrors.title">{{ formErrors.title }}</span>
       </div>
 
       <div class="form-group">
@@ -156,22 +230,31 @@
                name="description" placeholder="Enter description">
       </div>
 
-      <div class="form-group">
-        <label>Status</label>
-        <select [(ngModel)]="newTask.status" name="status">
-          <option value="PENDING">Pending</option>
-          <option value="IN_PROGRESS">In Progress</option>
-          <option value="COMPLETED">Completed</option>
-        </select>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Status</label>
+          <select [(ngModel)]="newTask.status" name="status">
+            <option value="PENDING">Pending</option>
+            <option value="IN_PROGRESS">In Progress</option>
+            <option value="COMPLETED">Completed</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Priority</label>
+          <select [(ngModel)]="newTask.priority" name="priority">
+            <option value="MINOR">Minor</option>
+            <option value="NORMAL">Normal</option>
+            <option value="CRITICAL">Critical</option>
+          </select>
+        </div>
       </div>
 
       <div class="form-group">
-        <label>Priority</label>
-        <select [(ngModel)]="newTask.priority" name="priority">
-          <option value="MINOR">Minor</option>
-          <option value="NORMAL">Normal</option>
-          <option value="CRITICAL">Critical</option>
-        </select>
+        <label>Due Date</label>
+        <input type="date" [(ngModel)]="newTask.dueDate" name="dueDate"
+               [class.input-error]="formErrors.dueDate">
+        <span class="error-msg" *ngIf="formErrors.dueDate">{{ formErrors.dueDate }}</span>
       </div>
 
       <div class="modal-actions">

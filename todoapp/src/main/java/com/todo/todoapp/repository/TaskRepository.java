@@ -6,4 +6,7 @@ import java.util.List;
 
 public interface TaskRepository extends JpaRepository<Task, Long> {
     List<Task> findByUserId(Long userId);  // ✅ new
+    Long countByUserId(Long userId);                              // ✅ new
+    Long countByUserIdAndStatus(Long userId, String status);      // ✅ new
+    void deleteByUserId(Long userId);       
 }

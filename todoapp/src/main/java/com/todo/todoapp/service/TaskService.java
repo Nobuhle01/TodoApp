@@ -20,7 +20,6 @@ public class TaskService {
     private final TaskRepository taskRepository;
     private final UserRepository userRepository;
 
-    // CREATE TASK
     public TaskResponseDTO createTask(TaskRequestDTO dto) {
         User user = userRepository.findById(dto.getUserId())
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -29,36 +28,28 @@ public class TaskService {
         task.setTitle(dto.getTitle());
         task.setDescription(dto.getDescription());
         task.setStatus(dto.getStatus());
-        task.setPriority(dto.getPriority());   // ✅ NEW
+        task.setPriority(dto.getPriority());
+        task.setDueDate(dto.getDueDate()); // ✅
         task.setUser(user);
 
         return mapToDTO(taskRepository.save(task));
     }
 
-    // GET TASKS BY USER
     public List<TaskResponseDTO> getTasksByUser(Long userId) {
         return taskRepository.findByUserId(userId)
-                .stream()
-                .map(this::mapToDTO)
-                .collect(Collectors.toList());
+                .stream().map(this::mapToDTO).collect(Collectors.toList());
     }
 
-    // GET ALL TASKS
     public List<TaskResponseDTO> getAllTasks() {
         return taskRepository.findAll()
-                .stream()
-                .map(this::mapToDTO)
-                .collect(Collectors.toList());
+                .stream().map(this::mapToDTO).collect(Collectors.toList());
     }
 
-    // GET BY ID
     public TaskResponseDTO getTaskById(Long id) {
-        Task task = taskRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Task not found"));
-        return mapToDTO(task);
+        return mapToDTO(taskRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Task not found")));
     }
 
-    // UPDATE TASK
     public TaskResponseDTO updateTask(Long id, TaskRequestDTO dto) {
         Task task = taskRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Task not found"));
@@ -66,7 +57,8 @@ public class TaskService {
         task.setTitle(dto.getTitle());
         task.setDescription(dto.getDescription());
         task.setStatus(dto.getStatus());
-        task.setPriority(dto.getPriority());   // ✅ NEW
+        task.setPriority(dto.getPriority());
+        task.setDueDate(dto.getDueDate()); // ✅
 
         if (dto.getUserId() != null) {
             User user = userRepository.findById(dto.getUserId())
@@ -77,26 +69,20 @@ public class TaskService {
         return mapToDTO(taskRepository.save(task));
     }
 
-    // DELETE TASK
     public void deleteTask(Long id) {
-        Task task = taskRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Task not found"));
-        taskRepository.delete(task);
+        taskRepository.delete(taskRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Task not found")));
     }
 
-    // MAPPER
     private TaskResponseDTO mapToDTO(Task task) {
         TaskResponseDTO dto = new TaskResponseDTO();
         dto.setId(task.getId());
         dto.setTitle(task.getTitle());
         dto.setDescription(task.getDescription());
         dto.setStatus(task.getStatus());
-        dto.setPriority(task.getPriority());   // ✅ NEW
-        if (task.getUser() != null) {
-            dto.setUserId(task.getUser().getId());
-        } else {
-            dto.setUserId(null);
-        }
+        dto.setPriority(task.getPriority());
+        dto.setDueDate(task.getDueDate()); // ✅
+        if (task.getUser() != null) dto.setUserId(task.getUser().getId());
         return dto;
     }
 }

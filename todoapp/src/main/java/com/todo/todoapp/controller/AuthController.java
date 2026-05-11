@@ -6,6 +6,7 @@ import com.todo.todoapp.repository.UserRepository;
 import com.todo.todoapp.security.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -13,11 +14,11 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
-
 public class AuthController {
 
     private final UserRepository userRepository;
     private final JwtUtil jwtUtil;
+    private final PasswordEncoder passwordEncoder;
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequestDTO dto) {
@@ -25,18 +26,18 @@ public class AuthController {
         User user = userRepository.findByEmail(dto.getEmail())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        // ⚠️ Plain text password check for now (we'll hash later with BCrypt)
-        if (!user.getPassword().equals(dto.getPassword())) {
+        // BCrypt password check
+        if (!passwordEncoder.matches(dto.getPassword(), user.getPassword())) {
             return ResponseEntity.status(401).body("Invalid credentials");
         }
 
         String token = jwtUtil.generateToken(user.getEmail());
 
-        // Return token AND userId so Angular can use both
         return ResponseEntity.ok(Map.of(
-                "token", token,
+                "token",  token,
                 "userId", user.getId(),
-                "name", user.getName()
+                "name",   user.getName(),
+                "role",   user.getRole()  // ✅ sends role so Angular can redirect correctly
         ));
     }
 }

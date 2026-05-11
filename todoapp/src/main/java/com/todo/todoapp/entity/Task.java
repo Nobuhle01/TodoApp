@@ -2,7 +2,7 @@ package com.todo.todoapp.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-
+import java.time.LocalDate;
 @Entity
 @Data
 @NoArgsConstructor
@@ -18,7 +18,8 @@ public class Task {
     private String description;
     private String status;
     private String priority;   // ✅ NEW: minor, normal, critical
-
+    private LocalDate dueDate;
+    
     @ManyToOne
     @JoinColumn(name = "user_id")
     private User user;
