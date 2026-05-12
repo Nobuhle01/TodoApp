@@ -37,7 +37,7 @@ public class AuthController {
                 "token",  token,
                 "userId", user.getId(),
                 "name",   user.getName(),
-                "role",   user.getRole()  // ✅ sends role so Angular can redirect correctly
+                "role",   user.getRole()
         ));
     }
 }

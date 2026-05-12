@@ -20,7 +20,13 @@ export class LoginComponent {
 
   login() {
     this.authService.login(this.credentials).subscribe({
-      next: () => this.router.navigate(['/tasks']),
+      next: () => {
+  if (this.authService.isAdmin()) {
+    this.router.navigate(['/admin']);
+  } else {
+    this.router.navigate(['/tasks']);
+  }
+},
       error: () => this.errorMessage = 'Invalid email or password'
     });
   }

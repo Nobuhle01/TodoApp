@@ -6,7 +6,7 @@ export interface LoginResponse {
   token: string;
   userId: number;
   name: string;
-  role: string;  // ✅ includes role
+  role: string;  
 }
 
 @Injectable({ providedIn: 'root' })
@@ -28,7 +28,7 @@ export class AuthService {
         localStorage.setItem('token',  response.token);
         localStorage.setItem('userId', response.userId.toString());
         localStorage.setItem('name',   response.name);
-        localStorage.setItem('role',   response.role);  // ✅ saves role
+        localStorage.setItem('role',   response.role); 
       })
     );
   }
@@ -38,14 +38,14 @@ export class AuthService {
     localStorage.removeItem('token');
     localStorage.removeItem('userId');
     localStorage.removeItem('name');
-    localStorage.removeItem('role');  // ✅ clears role
+    localStorage.removeItem('role'); 
   }
 
   // HELPERS
   getToken(): string | null { return localStorage.getItem('token'); }
   getUserId(): number       { return Number(localStorage.getItem('userId')); }
   getUserName(): string     { return localStorage.getItem('name') || ''; }
-  getRole(): string         { return localStorage.getItem('role') || 'USER'; }  // ✅
+  getRole(): string         { return localStorage.getItem('role') || 'USER'; } 
   isLoggedIn(): boolean     { return !!this.getToken(); }
-  isAdmin(): boolean        { return this.getRole() === 'ADMIN'; }  // ✅
+  isAdmin(): boolean        { return this.getRole() === 'ADMIN'; } 
 }

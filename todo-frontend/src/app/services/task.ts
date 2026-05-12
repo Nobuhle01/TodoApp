@@ -7,8 +7,8 @@ export interface Task {
   title: string;
   description: string;
   status: string;
-  priority: string;   // ✅ NEW
-  dueDate: string;   // ✅ NEW: ISO string format
+  priority: string;   
+  dueDate: string; 
   userId: number;
 }
 
@@ -16,8 +16,8 @@ export interface CreateTask {
   title: string;
   description: string;
   status: string;
-  priority: string;   // ✅ NEW
-  dueDate: string;   // ✅ NEW: ISO string format
+  priority: string;   
+  dueDate: string;   
   userId: number;
 }
 

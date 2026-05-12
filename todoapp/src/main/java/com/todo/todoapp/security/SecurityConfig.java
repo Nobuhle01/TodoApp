@@ -31,24 +31,44 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http
-            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-            .csrf(AbstractHttpConfigurer::disable)
-            .authorizeHttpRequests(auth -> auth
-                // ✅ Public — no token needed
-                .requestMatchers("/api/auth/**", "/api/users/register").permitAll()
-                // ✅ Admin endpoints — ADMIN role only
-                .requestMatchers("/api/admin/**").hasAuthority("ADMIN")
-                // ✅ Everything else requires a valid JWT
-                .anyRequest().authenticated()
+public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+
+    http
+        .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+        .csrf(AbstractHttpConfigurer::disable)
+
+        // ✅ JWT apps should be stateless
+        .sessionManagement(session ->
+            session.sessionCreationPolicy(
+                org.springframework.security.config.http.SessionCreationPolicy.STATELESS
             )
-            .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+        )
 
-        return http.build();
-    }
+        .authorizeHttpRequests(auth -> auth
 
-    // ✅ Global CORS — allows Angular dev server
+            // ✅ Allow preflight requests
+            .requestMatchers(
+                org.springframework.http.HttpMethod.OPTIONS,
+                "/**"
+            ).permitAll()
+
+            // ✅ Public endpoints
+            .requestMatchers("/api/auth/**").permitAll()
+            .requestMatchers("/api/users/register").permitAll()
+
+            // ✅ Admin only
+            .requestMatchers("/api/admin/**").hasAuthority("ADMIN")
+
+            // ✅ Everything else requires token
+            .anyRequest().authenticated()
+        )
+
+        // ✅ JWT filter
+        .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+
+    return http.build();
+}
+    
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();

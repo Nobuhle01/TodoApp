@@ -17,7 +17,7 @@ public class Task {
     private String title;
     private String description;
     private String status;
-    private String priority;   // ✅ NEW: minor, normal, critical
+    private String priority;  
     private LocalDate dueDate;
     
     @ManyToOne
